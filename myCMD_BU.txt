@@ -1,0 +1,156 @@
+## libraries used
+library(ggplot2)
+
+## my working directoy
+setwd("H:/Dropbox/__GitHub/ExploratoryDataAnalysis_Assignment_Project2/")
+
+## set url of zip file
+url <- "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip"
+
+## set localzip name 
+localzip <- "pm25EmissionsAndClassificationCodeTable.zip"
+
+## download zip and save it as localzip
+download.file(url, destfile = localzip)
+
+## unzip
+unzip(localzip)
+
+## set localfile names
+localfile1 <- "summarySCC_PM25.rds"
+localfile2 <- "Source_Classification_Code.rds"
+
+## This first line will likely take a few seconds. Be patient!
+NEI <- readRDS(localfile1)
+SCC <- readRDS(localfile2)
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
+
+## PLOT 1
+## Sum Emisions by Year
+SumPM25byYear <- tapply(NEI$Emissions/1000.0, NEI$year, sum)
+
+## create plot
+plot(names(SumPM25byYear), SumPM25byYear, type="b", xlab="Year", ylab="Total PM2.5 Emissions (1,000 ton)", main="Total PM2.5 Emissions (1,000 ton) by Year")
+
+## copy to png file as plot1.png set height and width
+dev.copy(png, file="plot1.png", height=600, width=800)
+
+## make sure to close file
+dev.off()
+## PLOT 1
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
+
+## PLOT 2
+## subset baltimore (fips=24510)
+BaltimoreNEI <- subset(NEI, fips=="24510")
+
+## Sum Emisions by Year
+BaltimoreSumPM25byYear <- tapply(BaltimoreNEI$Emissions/1000.0, BaltimoreNEI$year, sum)
+
+## create plot
+plot(names(BaltimoreSumPM25byYear), BaltimoreSumPM25byYear, type="b", xlab = "Year", ylab = "Total PM2.5 Emissions (1,000 ton)", main = "Baltimore Total PM2.5 Emissions (1,000 ton) by Year")
+
+## copy to png file as plot2.png set height and width
+dev.copy(png, file="plot2.png", height=600, width=800)
+
+## make sure to close file
+dev.off()
+## PLOT 2
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
+
+## PLOT 3
+## subset baltimore (fips=24510)
+BaltimoreNEI <- subset(NEI, fips=="24510")
+
+BaltimorePlot <- ggplot(BaltimoreNEI, aes(factor(year), Emissions/1000.0, fill=type)) + 
+	geom_bar(stat="identity") + 
+	facet_grid(.~type) + 
+	labs(x="Year", y="Total PM2.5 Emissions (1,000 ton)", title="Baltimore Total PM2.5 Emissions (1,000 ton) by Source / Year")
+	
+print(BaltimorePlot)
+
+## copy to png file as plot3.png set height and width
+dev.copy(png, file="plot3.png", height=600, width=800)
+
+## make sure to close file
+dev.off()
+## PLOT 3
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
+
+## PLOT 4
+## subset Coal combustion
+Coal <- grepl("Coal", SCC$Short.Name, ignore.case=TRUE) 
+CoalSCC <- SCC[Coal,]$SCC
+CoalNEI <- NEI[NEI$SCC %in% CoalSCC,]
+
+CoalPlot <- ggplot(CoalNEI, aes(factor(year), Emissions/1000.0)) + 
+	geom_bar(stat="identity") + 
+	labs(x="Year", y="Total PM2.5 Emissions (1,000 ton)", title="Across US Coal Combustion Total PM2.5 Emissions (1,000 ton) by Year")
+	
+print(CoalPlot)
+
+## copy to png file as plot4.png set height and width
+dev.copy(png, file="plot4.png", height=600, width=800)
+
+## make sure to close file
+dev.off()
+## PLOT 4
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
+
+## PLOT 5
+## subset baltimore (fips=24510)
+BaltimoreNEI <- subset(NEI, fips=="24510")
+
+## subset Vehicle combustion
+Vehicle <- grepl("Vehicle", SCC$SCC.Level.Two, ignore.case=TRUE) 
+VehicleSCC <- SCC[Vehicle,]$SCC
+BaltimoreVehicleNEI <- BaltimoreNEI[BaltimoreNEI$SCC %in% VehicleSCC,]
+
+BaltimoreVehiclePlot <- ggplot(BaltimoreVehicleNEI, aes(factor(year), Emissions/1000.0)) + 
+	geom_bar(stat="identity") + 
+	labs(x="Year", y="Total PM2.5 Emissions (1,000 ton)", title="Baltimore Vehicle Total PM2.5 Emissions (1,000 ton) by Year")
+	
+print(BaltimoreVehiclePlot)
+
+## copy to png file as plot5.png set height and width
+dev.copy(png, file="plot5.png", height=600, width=800)
+
+## make sure to close file
+dev.off()
+## PLOT 5
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
+
+## PLOT 6
+## subset baltimore (fips=24510) and los angeles (fips=06037)
+BaltimoreNEI <- subset(NEI, fips=="24510")
+BaltimoreNEI$City <- "Baltimore City"
+LosAngelesNEI <- subset(NEI, fips=="06037")
+LosAngelesNEI$City <- "Los Angeles County"
+CompareCitiesNEI <- rbind(BaltimoreNEI,LosAngelesNEI)
+
+## subset Vehicle combustion
+Vehicle <- grepl("Vehicle", SCC$SCC.Level.Two, ignore.case=TRUE) 
+VehicleSCC <- SCC[Vehicle,]$SCC
+CompareCitiesVehicleNEI <- CompareCitiesNEI[CompareCitiesNEI$SCC %in% VehicleSCC,]
+
+CompareCitiesVehiclePlot <- ggplot(CompareCitiesVehicleNEI, aes(factor(year), Emissions/1000.0, fill=City)) + 
+	geom_bar(stat="identity") + 
+	facet_grid(.~City) + 
+	labs(x="Year", y="Total PM2.5 Emissions (1,000 ton)", title="Vehicle Total PM2.5 Emissions (1,000 ton) by City / Year")
+
+print(CompareCitiesVehiclePlot)
+
+## copy to png file as plot6.png set height and width
+dev.copy(png, file="plot6.png", height=600, width=800)
+
+## make sure to close file
+dev.off()
+## PLOT 6
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
